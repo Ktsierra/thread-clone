@@ -1,0 +1,47 @@
+w/* Example: derive keys from an imported top-level type and make your function param match the expected strategy type */
+
+// Suppose you imported this top-level type from another file
+export type SsoStrategies = {
+  google: { start: (opts: { email: string }) => Promise<void> };
+  okta: { start: (opts: { redirectUri: string }) => Promise<void> };
+};
+
+// Runtime implementations must match the type
+export const SSO_IMPLEMENTATIONS: SsoStrategies = {
+  google: {
+    start: async (opts) => {
+      // implementation for Google
+      console.log('google start', opts.email);
+    }
+  },
+  okta: {
+    start: async (opts) => {
+      // implementation for Okta
+      console.log('okta start', opts.redirectUri);
+    }
+  }
+};
+
+// Derive the key union type from the top-level type
+export type SsoStrategyKey = keyof SsoStrategies; // "google" | "okta"
+
+// Generic function: K is constrained to the keys of SsoStrategies
+// The payload type is extracted from the corresponding strategy's `start` parameter
+export async function startSsoFlow<K extends SsoStrategyKey>(
+  strategy: K,
+  payload: Parameters<SsoStrategies[K]["start"]>[0]
+): Promise<ReturnType<SsoStrategies[K]["start"]>> {
+  const impl = SSO_IMPLEMENTATIONS[strategy];
+  return impl.start(payload);
+}
+
+:q
+await startSsoFlow('google', { email: 'user@example.com' }); // OK
+// await startSsoFlow('google', { redirectUri: 'x' }); // Type error
+// await startSsoFlow('unknown', {}); // Type error
+
+/*
+ Alternative: if you have a runtime object and want its keys as a type
+ type FromRuntimeKeys = keyof typeof SSO_IMPLEMENTATIONS; // same: "google" | "okta"
+*/
+
