@@ -1,9 +1,20 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Button, StyleSheet, Text, View } from "react-native";
+import * as Sentry from "@sentry/react-native";
 
 const Feed = () => {
   return (
     <View>
-      <Text>Feed</Text>
+      <Text>FEEd</Text>
+      <Text>FEEd</Text>
+      <Text>FEEd</Text>
+      <Text>FEEd</Text>
+      <Text>FEEd</Text>
+      <Button
+        title="Try!"
+        onPress={() => {
+          Sentry.captureException(new Error("First error"));
+        }}
+      />
     </View>
   );
 };
