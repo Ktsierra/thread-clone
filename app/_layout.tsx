@@ -1,4 +1,4 @@
-import { Slot } from "expo-router";
+import { Slot, useRouter, useSegments } from "expo-router";
 import {
   useFonts,
   DMSans_400Regular,
@@ -6,6 +6,7 @@ import {
   DMSans_700Bold,
 } from "@expo-google-fonts/dm-sans";
 import * as SplashScreen from "expo-splash-screen";
+import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import { useEffect } from "react";
 import { ClerkProvider, ClerkLoaded, useAuth } from "@clerk/clerk-expo";
 import { StatusBar } from "expo-status-bar";
@@ -26,6 +27,9 @@ const InitialLayout = () => {
     DMSans_500Medium,
     DMSans_700Bold,
   });
+  const { isSignedIn, isLoaded } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
 
   useEffect(() => {
     if (fontsLoaded) {
@@ -33,12 +37,21 @@ const InitialLayout = () => {
     }
   }, [fontsLoaded]);
 
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    const inTabsGroup = segments[0] === "(auth)";
+
+    if (!isSignedIn && inTabsGroup) router.replace("/(public)");
+    if (isSignedIn && !inTabsGroup) router.replace("/(auth)/(tabs)/feed");
+  }, [isSignedIn, segments, isLoaded, router]);
+
   return <Slot />;
 };
 
 const RootLayoutNav = () => {
   return (
-    <ClerkProvider>
+    <ClerkProvider tokenCache={tokenCache}>
       <ClerkLoaded>
         <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
           <StatusBar animated={true} style="auto" />

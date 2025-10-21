@@ -13,27 +13,22 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSSO } from "@clerk/clerk-expo";
 import { type OAuthStrategy } from "@clerk/types";
 import { StatusBar } from "expo-status-bar";
-import { useConvexAuth, useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
 
 const LoginScreen = () => {
   const { startSSOFlow } = useSSO();
-  const data = useQuery(api.user.getAllUsers);
-  console.log("data:", data);
-
-  const { isAuthenticated } = useConvexAuth();
-  console.log("isAuthenticated:", isAuthenticated);
 
   const handleSSOLogin = async (strategy: OAuthStrategy) => {
     try {
       const { createdSessionId, setActive } = await startSSOFlow({
         strategy,
       });
-      console.log("createdSessionId:", createdSessionId);
+
       if (createdSessionId && setActive) {
-        setActive({ session: createdSessionId }).catch((error: unknown) => {
-          console.error(error);
-        });
+        await setActive({ session: createdSessionId }).catch(
+          (error: unknown) => {
+            console.error(error);
+          },
+        );
       }
     } catch (error: unknown) {
       console.error(error);
