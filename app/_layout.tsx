@@ -8,14 +8,24 @@ import {
 import * as SplashScreen from "expo-splash-screen";
 import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import { useEffect } from "react";
-import { ClerkProvider, ClerkLoaded, useAuth } from "@clerk/clerk-expo";
+import {
+  ClerkProvider,
+  ClerkLoaded,
+  useAuth,
+  useUser,
+} from "@clerk/clerk-expo";
 import { StatusBar } from "expo-status-bar";
 import { ConvexReactClient } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import * as Sentry from "@sentry/react-native";
 
 Sentry.init({
-  dsn: "https://64c31a25cb7a9476d06411317cb519c8@o4510228131020800.ingest.us.sentry.io/4510228140326912",
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+
+  attachScreenshot: true,
+  debug: false,
+  tracesSampleRate: 1,
+  profilesSampleRate: 1,
 
   // Adds more context data to events (IP address, cookies, user, etc.)
   // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
@@ -52,6 +62,7 @@ const InitialLayout = () => {
   const { isSignedIn, isLoaded } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const { user } = useUser();
 
   useEffect(() => {
     if (fontsLoaded) {
@@ -67,6 +78,16 @@ const InitialLayout = () => {
     if (!isSignedIn && inTabsGroup) router.replace("/(public)");
     if (isSignedIn && !inTabsGroup) router.replace("/(auth)/(tabs)/feed");
   }, [isSignedIn, segments, isLoaded, router]);
+
+  useEffect(() => {
+    if (user) {
+      Sentry.setUser({
+        email: user.emailAddresses[0].emailAddress,
+        id: user.id,
+        username: user.username ?? undefined,
+      });
+    }
+  }, [user]);
 
   return <Slot />;
 };
@@ -84,6 +105,4 @@ const RootLayoutNav = () => {
   );
 };
 
-export default RootLayoutNav;
-
-Sentry.wrap(RootLayoutNav);
+export default Sentry.wrap(RootLayoutNav);
