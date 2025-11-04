@@ -1,9 +1,10 @@
 import { Colors } from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
-import { Stack } from "expo-router";
-import { TouchableOpacity } from "react-native";
+import { Stack, useRouter } from "expo-router";
+import { TouchableOpacity, Text } from "react-native";
 
 const Layout = () => {
+  const router = useRouter();
   return (
     <Stack
       screenOptions={{
@@ -22,7 +23,25 @@ const Layout = () => {
           title: "New Thread",
           headerRight: () => (
             <TouchableOpacity>
-              <Ionicons name={"ellipsis-horizontal"} size={24} />
+              <Ionicons
+                // eslint-disable-next-line react-native/no-inline-styles
+                style={{ paddingHorizontal: 12 }}
+                name={"ellipsis-horizontal"}
+                size={24}
+              />
+            </TouchableOpacity>
+          ),
+        }}
+      />
+
+      <Stack.Screen
+        name={"(modal)/edit-profile"}
+        options={{
+          presentation: "modal",
+          title: "Edit Profile",
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => router.dismiss()}>
+              <Text>Cancel</Text>
             </TouchableOpacity>
           ),
         }}

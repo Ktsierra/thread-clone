@@ -1,23 +1,33 @@
-import { Slot, useRouter, useSegments } from "expo-router";
 import {
-  useFonts,
-  DMSans_400Regular,
-  DMSans_500Medium,
-  DMSans_700Bold,
-} from "@expo-google-fonts/dm-sans";
-import * as SplashScreen from "expo-splash-screen";
-import { tokenCache } from "@clerk/clerk-expo/token-cache";
-import { useEffect } from "react";
-import {
-  ClerkProvider,
   ClerkLoaded,
+  ClerkProvider,
   useAuth,
   useUser,
 } from "@clerk/clerk-expo";
-import { StatusBar } from "expo-status-bar";
+import { tokenCache } from "@clerk/clerk-expo/token-cache";
+import {
+  DMSans_400Regular,
+  DMSans_500Medium,
+  DMSans_700Bold,
+  useFonts,
+} from "@expo-google-fonts/dm-sans";
+import * as Sentry from "@sentry/react-native";
 import { ConvexReactClient } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
-import * as Sentry from "@sentry/react-native";
+import { isRunningInExpoGo } from "expo";
+import {
+  Slot,
+  useNavigationContainerRef,
+  useRouter,
+  useSegments,
+} from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
+
+const navigationIntegration = Sentry.reactNavigationIntegration({
+  enableTimeToInitialDisplay: !isRunningInExpoGo(),
+});
 
 Sentry.init({
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
@@ -93,6 +103,12 @@ const InitialLayout = () => {
 };
 
 const RootLayoutNav = () => {
+  const ref = useNavigationContainerRef();
+
+  useEffect(() => {
+    navigationIntegration.registerNavigationContainer(ref);
+  }, [ref]);
+
   return (
     <ClerkProvider tokenCache={tokenCache}>
       <ClerkLoaded>

@@ -3,6 +3,7 @@ import { api } from "@/convex/_generated/api";
 import { type Id } from "@/convex/_generated/dataModel";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useQuery } from "convex/react";
+import { Link } from "expo-router";
 import {
   Button,
   Image,
@@ -19,7 +20,7 @@ interface UserProfileProps {
 const UserProfile = ({ userId }: UserProfileProps) => {
   const profile = useQuery(api.user.getUserById, { userId });
   const { userProfile } = useUserProfile();
-  const isSelf = userId === userProfile?._id;
+  const isSelf = !!userProfile && userId === userProfile._id;
 
   return (
     <View style={styles.container}>
@@ -40,9 +41,22 @@ const UserProfile = ({ userId }: UserProfileProps) => {
       <View style={styles.buttonRow}>
         {isSelf && (
           <>
-            <TouchableOpacity style={styles.button}>
-              <Text style={styles.buttonText}>Edit Profile</Text>
-            </TouchableOpacity>
+            <Link
+              href={{
+                pathname: "/(auth)/(modal)/edit-profile",
+                params: {
+                  biostring: userProfile.bio,
+                  userId: userProfile._id,
+                  linkstring: userProfile.websiteUrl,
+                  imageUrl: userProfile.imageUrl,
+                },
+              }}
+              asChild
+            >
+              <TouchableOpacity style={styles.button}>
+                <Text style={styles.buttonText}>Edit Profile</Text>
+              </TouchableOpacity>
+            </Link>
             <TouchableOpacity style={styles.button}>
               <Text style={styles.buttonText}>Share Profile</Text>
             </TouchableOpacity>
