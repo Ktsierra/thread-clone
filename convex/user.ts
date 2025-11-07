@@ -5,6 +5,8 @@ import {
   type QueryCtx,
 } from "@/convex/_generated/server";
 import { v } from "convex/values";
+import { type Id } from "./_generated/dataModel";
+import { use } from "react";
 
 // export const getAllUsers = query({
 //   args: {},
@@ -19,7 +21,7 @@ export const createUSer = internalMutation({
     email: v.string(),
     first_name: v.optional(v.string()),
     last_name: v.optional(v.string()),
-    imageUrl: v.optional(v.string()),
+    imageUrl: v.optional(v.union(v.string(), v.id("_storage"))),
     username: v.union(v.string(), v.null()),
     bio: v.optional(v.string()),
     websiteUrl: v.optional(v.string()),
@@ -40,10 +42,13 @@ export const getUserByClerkId = query({
     clerkId: v.string(),
   },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const user = await ctx.db
       .query("users")
       .filter((q) => q.eq(q.field("clerkId"), args.clerkId))
       .unique();
+
+    if (!user) throw new Error("User not found");
+    return getUserWithImageUrl(ctx, user._id);
   },
 });
 
@@ -52,7 +57,7 @@ export const getUserById = query({
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.userId);
+    return await getUserWithImageUrl(ctx, args.userId);
   },
 });
 
@@ -61,16 +66,33 @@ export const updateUser = mutation({
     // userId: v.id("users"),
     bio: v.optional(v.string()),
     websiteUrl: v.optional(v.string()),
-    profilePicture: v.optional(v.string()),
+    imageUrl: v.optional(v.union(v.string(), v.id("_storage"))),
     pushToken: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUserOrThrow(ctx);
     // const { userId, ...rest } = args;
-    const rest = args;
-    await ctx.db.patch(user._id, rest);
+    await ctx.db.patch(user._id, args);
   },
 });
+
+export const generateUploadUrl = mutation({
+  handler: async (ctx) => {
+    await getCurrentUserOrThrow(ctx);
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
+// REUSABLES
+const getUserWithImageUrl = async (ctx: QueryCtx, userId: Id<"users">) => {
+  const user = await ctx.db.get(userId);
+  if (!user?.imageUrl || user.imageUrl.startsWith("http")) {
+    return user;
+  }
+
+  const imageUrl = await ctx.storage.getUrl(user.imageUrl as Id<"_storage">);
+  return { ...user, imageUrl };
+};
 
 //IDENTITY
 

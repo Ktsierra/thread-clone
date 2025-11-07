@@ -4,7 +4,7 @@ import { v } from "convex/values";
 export const User = {
   email: v.string(),
   clerkId: v.string(),
-  imageUrl: v.optional(v.string()),
+  imageUrl: v.optional(v.union(v.string(), v.id("_storage"))),
   first_name: v.optional(v.string()),
   last_name: v.optional(v.string()),
   username: v.union(v.string(), v.null()),

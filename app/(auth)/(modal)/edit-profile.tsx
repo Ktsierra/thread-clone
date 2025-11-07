@@ -1,6 +1,8 @@
 import { Colors } from "@/constants/Colors";
 import { api } from "@/convex/_generated/api";
 import { type Id } from "@/convex/_generated/dataModel";
+import { type ImagePickerAsset } from "expo-image-picker";
+import * as ImagePicker from "expo-image-picker";
 import { useMutation } from "convex/react";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
@@ -13,19 +15,30 @@ import {
   View,
 } from "react-native";
 
+interface EditProps {
+  bio: string;
+  websiteUrl: string;
+  imageUrl: Id<"_storage">;
+}
+
 const Edit = () => {
-  const { biostring, linkstring, userId, imageUrl } = useLocalSearchParams<{
+  const { biostring, linkstring, imageUrl } = useLocalSearchParams<{
     biostring: string;
     linkstring: string;
     userId: Id<"users">;
-    imageUrl: string;
+    imageUrl: Id<"_storage">;
   }>();
 
   const [bio, setBio] = useState(biostring);
   const [link, setLink] = useState(linkstring);
-  const [image, setImage] = useState(imageUrl);
+  const [selectedImage, setSelectedImage] = useState<ImagePickerAsset | null>(
+    null,
+  );
+
   const [isModified, setIsModified] = useState(false);
   const updateUser = useMutation(api.user.updateUser);
+  const generateUploadUrl = useMutation(api.user.generateUploadUrl);
+
   const router = useRouter();
 
   const onDone = async () => {
@@ -34,19 +47,44 @@ const Edit = () => {
       return;
     }
 
-    await updateUser({
+    const toUpdate: Partial<EditProps> = {
       // userId,
       bio,
       websiteUrl: link,
-    });
+    };
+    if (selectedImage) {
+      const storageId = await updateProfilePicture();
+      toUpdate.imageUrl = storageId;
+    }
+
+    await updateUser(toUpdate);
     setIsModified(false);
     router.dismiss();
   };
 
-  const modHandler = (event: string, callback: (text: string) => void) => {
-    console.log(":", "test");
-    setIsModified(true);
-    callback(event);
+  const updateProfilePicture = async () => {
+    const uploadUrl = await generateUploadUrl();
+
+    if (!selectedImage?.uri) {
+      // This should never happen because we check for selectedImage above
+      throw new Error("No image selected for upload.", { cause: "NO_IMAGE" });
+    }
+
+    const response = await fetch(selectedImage.uri);
+    const blob = await response.blob();
+
+    const result = await fetch(uploadUrl, {
+      method: "POST",
+      body: blob,
+      headers: {
+        "Content-Type": selectedImage.mimeType ?? "image/jpeg",
+      },
+    });
+
+    const { storageId } = (await result.json()) as {
+      storageId: Id<"_storage">;
+    };
+    return storageId;
   };
 
   const markChange =
@@ -55,6 +93,17 @@ const Edit = () => {
       setter(text);
     };
 
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1, 1],
+    });
+    if (!result.canceled) {
+      setIsModified(true);
+      setSelectedImage(result.assets[0]);
+    }
+  };
   return (
     <View>
       <Stack.Screen
@@ -66,7 +115,14 @@ const Edit = () => {
           ),
         }}
       />
-      <Image source={{ uri: imageUrl }} style={styles.image} />
+
+      <TouchableOpacity onPress={() => void pickImage()}>
+        {selectedImage ? (
+          <Image source={{ uri: selectedImage.uri }} style={styles.image} />
+        ) : (
+          <Image source={{ uri: imageUrl }} style={styles.image} />
+        )}
+      </TouchableOpacity>
 
       <View style={styles.section}>
         <Text style={styles.label}>Bio</Text>
@@ -99,7 +155,7 @@ export default Edit;
 const styles = StyleSheet.create({
   bioInput: {
     fontSize: 14,
-    fontWeight: 500,
+    fontWeight: "500",
     height: 100,
   },
   image: {

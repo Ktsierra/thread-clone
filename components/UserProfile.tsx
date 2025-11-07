@@ -4,14 +4,7 @@ import { type Id } from "@/convex/_generated/dataModel";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useQuery } from "convex/react";
 import { Link } from "expo-router";
-import {
-  Button,
-  Image,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface UserProfileProps {
   userId: Id<"users">;
@@ -31,11 +24,14 @@ const UserProfile = ({ userId }: UserProfileProps) => {
           </Text>
           <Text style={styles.username}>@{profile?.username}</Text>
         </View>
-        <Image source={{ uri: profile?.imageUrl }} style={styles.image} />
+        <Image
+          source={{ uri: profile?.imageUrl as string }}
+          style={styles.image}
+        />
       </View>
       <Text style={styles.bio}>{profile?.bio ?? "No bio"}</Text>
       <Text style={{}}>
-        {profile?.followersCount}·{profile?.websiteUrl ?? "No website"}
+        {profile?.followersCount} · {profile?.websiteUrl ?? "No website"}
       </Text>
 
       <View style={styles.buttonRow}>
@@ -46,7 +42,6 @@ const UserProfile = ({ userId }: UserProfileProps) => {
                 pathname: "/(auth)/(modal)/edit-profile",
                 params: {
                   biostring: userProfile.bio,
-                  userId: userProfile._id,
                   linkstring: userProfile.websiteUrl,
                   imageUrl: userProfile.imageUrl,
                 },
