@@ -17,7 +17,7 @@ export const User = {
 
 export const Message = {
   userId: v.id("users"), // Foreign key to users table
-  threadId: v.optional(v.string()),
+  threadId: v.optional(v.id("messages")),
   content: v.string(),
   likeCount: v.number(), // Default value 0
   commentCount: v.number(), // Default value 0

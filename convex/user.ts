@@ -5,8 +5,7 @@ import {
   type QueryCtx,
 } from "@/convex/_generated/server";
 import { v } from "convex/values";
-import { type Id } from "./_generated/dataModel";
-import { use } from "react";
+import type { Doc, Id } from "./_generated/dataModel";
 
 // export const getAllUsers = query({
 //   args: {},
@@ -48,7 +47,7 @@ export const getUserByClerkId = query({
       .unique();
 
     if (!user) throw new Error("User not found");
-    return getUserWithImageUrl(ctx, user._id);
+    return getUserWithImageUrl(ctx, user);
   },
 });
 
@@ -57,7 +56,9 @@ export const getUserById = query({
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    return await getUserWithImageUrl(ctx, args.userId);
+    const user = await ctx.db.get(args.userId);
+    if (!user) throw new Error("User not found");
+    return await getUserWithImageUrl(ctx, user);
   },
 });
 
@@ -84,9 +85,8 @@ export const generateUploadUrl = mutation({
 });
 
 // REUSABLES
-const getUserWithImageUrl = async (ctx: QueryCtx, userId: Id<"users">) => {
-  const user = await ctx.db.get(userId);
-  if (!user?.imageUrl || user.imageUrl.startsWith("http")) {
+const getUserWithImageUrl = async (ctx: QueryCtx, user: Doc<"users">) => {
+  if (!user.imageUrl || user.imageUrl.startsWith("http")) {
     return user;
   }
 
