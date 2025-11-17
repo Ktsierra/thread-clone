@@ -12,6 +12,7 @@ import {
   Alert,
   Image,
   InputAccessoryView,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -34,16 +35,21 @@ const ThreadComposer: React.FC<ThreadComposerProps> = ({
   const { userProfile } = useUserProfile();
   const [threadContent, setthreadContent] = useState("");
   // const [websiteUrl, setWebsiteUrl] = useState<string | null>(null);
-  const [mediaFiles, setMediaFiles] = useState<string[] | null>(null);
+  const [mediaFiles, setMediaFiles] = useState<ImagePicker.ImagePickerAsset[]>(
+    [],
+  );
   const InputAccessoryViewID = "threadPostId";
 
   const addThread = useMutation(api.messages.addThreadMessage);
+  const generateUploadUrl = useMutation(api.messages.generateUploadUrl);
 
   const handleSubmit = async () => {
+    const mediaIds = await Promise.all(mediaFiles.map(uploadMediaFile));
+    console.log(":", mediaIds);
     await addThread({
       threadId,
       content: threadContent,
-      // mediaFiles,
+      mediaFiles: mediaIds,
       // websiteUrl,
     });
     removeThread();
@@ -56,7 +62,7 @@ const ThreadComposer: React.FC<ThreadComposerProps> = ({
   };
 
   const handleCancel = () => {
-    if (threadContent) {
+    if (threadContent || mediaFiles.length > 0) {
       Alert.alert("Discard Thread?", "", [
         {
           text: "Cancel",
@@ -80,32 +86,45 @@ const ThreadComposer: React.FC<ThreadComposerProps> = ({
     }
   };
 
-  const selectImage = (type: "library" | "camera") => {
-    console.log(":", type);
+  const selectImage = async (type: "library" | "camera") => {
+    const options: ImagePicker.ImagePickerOptions = {
+      mediaTypes: ["images"],
+      allowsMultipleSelection: true,
+      // allowsEditing: true,
+      aspect: [1, 1],
+    };
+    let result;
+    if (type === "library") {
+      result = await ImagePicker.launchImageLibraryAsync(options);
+    } else {
+      result = await ImagePicker.launchCameraAsync(options);
+    }
+
+    if (!result.canceled) {
+      setMediaFiles([...result.assets, ...mediaFiles]);
+    }
   };
 
-  // const selectImage = (type: "library" | "camera") => {
-  //   switch (type) {
-  //     case "library":
-  //       void pickImage();
-  //       break;
-  //
-  //     default:
-  //       break;
-  //   }
-  // };
-  //
-  // const pickImage = async () => {
-  //   const result = await ImagePicker.launchImageLibraryAsync({
-  //     mediaTypes: ["images"],
-  //     allowsEditing: true,
-  //     aspect: [1, 1],
-  //   });
-  //   if (!result.canceled) {
-  //     const uris = result.assets.map((asset) => asset.uri);
-  //     setMediaFiles((prev) => (prev ? [...prev, ...uris] : uris));
-  //   }
-  // };
+  const uploadMediaFile = async (image: ImagePicker.ImagePickerAsset) => {
+    const uploadUrl = await generateUploadUrl();
+
+    const response = await fetch(image.uri);
+    const blob = await response.blob();
+
+    const result = await fetch(uploadUrl, {
+      method: "POST",
+      body: blob,
+      headers: {
+        "Content-Type": image.mimeType ?? "image/jpeg",
+      },
+    });
+
+    const { storageId } = (await result.json()) as {
+      storageId: Id<"_storage">;
+    };
+    return storageId;
+  };
+
   return (
     <View>
       <Stack.Screen
@@ -140,20 +159,34 @@ const ThreadComposer: React.FC<ThreadComposerProps> = ({
             inputAccessoryViewID={InputAccessoryViewID}
           />
 
-          {mediaFiles?.map((val, index) => (
-            <Image source={{ uri: val }} key={index} style={styles.avatar} />
-          ))}
+          {mediaFiles.length > 0 && (
+            <ScrollView horizontal={true}>
+              {mediaFiles.map((file, index) => (
+                <View key={index} style={styles.mediaFileContainer}>
+                  <Image source={{ uri: file.uri }} style={styles.mediaFiles} />
+                  <TouchableOpacity
+                    style={styles.mediaFileDelete}
+                    onPress={() =>
+                      setMediaFiles(mediaFiles.filter((_, i) => i !== index))
+                    }
+                  >
+                    <Ionicons name={"close"} size={16} color={Colors.white} />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </ScrollView>
+          )}
 
           <View style={styles.iconRow}>
             <TouchableOpacity
               style={styles.iconButton}
-              onPress={() => selectImage("library")}
+              onPress={() => void selectImage("library")}
             >
               <Ionicons name="images-outline" size={24} color={Colors.border} />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.iconButton}
-              onPress={() => selectImage("camera")}
+              onPress={() => void selectImage("camera")}
             >
               <Ionicons name="camera-outline" size={24} color={Colors.border} />
             </TouchableOpacity>
@@ -241,6 +274,26 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 12,
     paddingLeft: 64,
+  },
+  mediaFileContainer: {
+    marginRight: 10,
+    marginTop: 10,
+  },
+  mediaFileDelete: {
+    backgroundColor: Colors.black,
+    borderRadius: 12,
+    opacity: 0.5,
+    padding: 4,
+    position: "absolute",
+    right: 15,
+    top: 15,
+  },
+  mediaFiles: {
+    borderRadius: 6,
+    height: 200,
+    marginRight: 10,
+    marginTop: 10,
+    width: 100,
   },
   name: {
     fontSize: 16,

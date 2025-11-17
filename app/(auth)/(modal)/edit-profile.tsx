@@ -62,6 +62,12 @@ const Edit = () => {
     router.dismiss();
   };
 
+  const markChange =
+    (setter: (text: string) => void, prevValue: string) => (text: string) => {
+      if (text !== prevValue) setIsModified(true);
+      setter(text);
+    };
+
   const updateProfilePicture = async () => {
     const uploadUrl = await generateUploadUrl();
 
@@ -86,12 +92,6 @@ const Edit = () => {
     };
     return storageId;
   };
-
-  const markChange =
-    (setter: (text: string) => void, prevValue: string) => (text: string) => {
-      if (text !== prevValue) setIsModified(true);
-      setter(text);
-    };
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
