@@ -12,7 +12,7 @@ import { usePaginatedQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useState } from "react";
 import ThreadComposer from "@/components/ThreadComposer";
-import { router, Stack, useRouter } from "expo-router";
+import { router, Stack, useNavigation, useRouter } from "expo-router";
 import { useHeaderHeight } from "@react-navigation/elements";
 import {
   SafeAreaView,
@@ -20,6 +20,13 @@ import {
 } from "react-native-safe-area-context";
 import { Colors } from "@/constants/Colors";
 import Thread from "@/components/Thread";
+import Animated, {
+  useAnimatedScrollHandler,
+  useSharedValue,
+} from "react-native-reanimated";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { useIsFocused } from "@react-navigation/native";
+import { runOnJS, scheduleOnRN } from "react-native-worklets";
 
 const Feed = () => {
   // Sentry test Errors
@@ -61,8 +68,40 @@ const Feed = () => {
     setTimeout(() => setRefreshing(false), 2000);
   };
 
+  //Animation
+  const navigation = useNavigation();
+  const scrollOffset = useSharedValue(0);
+  const tabBarHeight = useBottomTabBarHeight();
+  const isFocus = useIsFocused();
+
+  const updateTabBar = () => {
+    let newMarginBottom = 0;
+    if (scrollOffset.value >= 0 && scrollOffset.value <= tabBarHeight) {
+      newMarginBottom = -scrollOffset.value;
+    } else if (scrollOffset.value >= tabBarHeight) {
+      newMarginBottom = -tabBarHeight;
+    }
+
+    navigation.getParent()?.setOptions({
+      tabBarStyle: {
+        marginBottom: newMarginBottom,
+      },
+    });
+  };
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      if (isFocus) {
+        scrollOffset.value = event.contentOffset.y;
+        scheduleOnRN(updateTabBar);
+      }
+    },
+  });
+
   return (
-    <FlatList
+    <Animated.FlatList
+      onScroll={scrollHandler}
+      scrollEventThrottle={16}
       data={results}
       showsVerticalScrollIndicator={false}
       renderItem={({ item }) => <Thread thread={item} />}

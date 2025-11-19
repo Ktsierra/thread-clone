@@ -30,6 +30,8 @@ const Thread = ({ thread }: ThreadProps) => {
     creator,
   } = thread;
 
+  const likeThread = useMutation(api.messages.likeThread);
+
   return (
     <View style={styles.container}>
       <Image source={{ uri: creator.imageUrl }} style={styles.avatar} />
@@ -59,29 +61,33 @@ const Thread = ({ thread }: ThreadProps) => {
           />
         </View>
         <Text style={styles.content}>{content}</Text>
-        {/* {mediaFiles && mediaFiles.length > 0 && ( */}
-        {/*   <ScrollView */}
-        {/*     horizontal */}
-        {/*     showsHorizontalScrollIndicator={false} */}
-        {/*     contentContainerStyle={styles.mediaContainer} */}
-        {/*   > */}
-        {/*     {mediaFiles.map((imageUrl, index) => ( */}
-        {/*       <Link */}
-        {/*         href={`/(auth)/(modal)/image/${encodeURIComponent(imageUrl)}?threadId=${thread._id}&likeCount=${likeCount}&commentCount=${commentCount}&retweetCount=${retweetCount}`} */}
-        {/*         key={index} */}
-        {/*         asChild */}
-        {/*       > */}
-        {/*         <TouchableOpacity> */}
-        {/*           <Image source={{ uri: imageUrl }} style={styles.mediaImage} /> */}
-        {/*         </TouchableOpacity> */}
-        {/*       </Link> */}
-        {/*     ))} */}
-        {/*   </ScrollView> */}
-        {/* )} */}
+
+        {mediaFiles && mediaFiles.length > 0 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.mediaContainer}
+          >
+            {mediaFiles.map((imageUrl, index) => {
+              //<Link
+              //href={`/(auth)/(modal)/image/${encodeURIComponent(imageUrl)}?threadId=${thread._id}&likeCount=${likeCount.toString()}&commentCount=${commentCount.toString()}&retweetCount=${retweetCount.toString()}`}
+              //key={index}
+              //asChild
+              //>
+              return (
+                <TouchableOpacity key={index}>
+                  <Image source={{ uri: imageUrl }} style={styles.mediaImage} />
+                </TouchableOpacity>
+                //</Link>
+              );
+            })}
+          </ScrollView>
+        )}
+
         <View style={styles.actions}>
           <TouchableOpacity
             style={styles.actionButton}
-            /* onPress={() => likeThread({ messageId: thread._id })} */
+            onPress={() => void likeThread({ threadId: thread._id })}
           >
             <Ionicons name="heart-outline" size={24} color="black" />
             <Text style={styles.actionText}>{likeCount}</Text>

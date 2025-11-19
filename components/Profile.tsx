@@ -14,24 +14,34 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import UserProfile from "./UserProfile";
 import Tabs from "./Tabs";
+import { usePaginatedQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import Thread from "./Thread";
 
 interface ProfileProps {
   showBackButton?: boolean;
   userId: Id<"users">;
 }
 
-const Profile: React.FC<ProfileProps> = () => {
+const Profile: React.FC = () => {
   const { userId, showBackButton } = useLocalSearchParams();
   const { userProfile } = useUserProfile();
   const { top } = useSafeAreaInsets();
   const { signOut } = useAuth();
   const router = useRouter();
 
+  const { results, status, loadMore } = usePaginatedQuery(
+    api.messages.getThreads,
+    { userId: ((userId as Id<"users">) || undefined) ?? userProfile?._id },
+    {
+      initialNumItems: 5,
+    },
+  );
   return (
     <View style={[styles.container, { paddingTop: top }]}>
       <FlatList
-        data={[]}
-        renderItem={({ item }) => <Text>{item}</Text>}
+        data={results}
+        renderItem={({ item }) => <Thread thread={item} />}
         ListEmptyComponent={
           <Text style={styles.tabContentText}>
             You haven&apos;t posted anything yet.

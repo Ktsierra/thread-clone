@@ -60,10 +60,12 @@ export const getThreads = query({
     const messagesWithCreator = await Promise.all(
       threads.page.map(async (thread) => {
         const creator = await getMessageCreator(ctx, thread.userId);
+        const mediaUrls = await getMediaUrls(ctx, thread.mediaFiles);
 
         return {
           ...thread,
           creator,
+          mediaFiles: mediaUrls,
         };
       }),
     );
@@ -89,3 +91,42 @@ const getMessageCreator = async (ctx: QueryCtx, userId: Id<"users">) => {
   const imageUrl = image ?? undefined;
   return { ...user, imageUrl };
 };
+
+const getMediaUrls = async (
+  ctx: QueryCtx,
+  mediaFiles: string[] | undefined,
+) => {
+  if (!mediaFiles || mediaFiles.length === 0) return [];
+
+  return await Promise.all(
+    mediaFiles.map(async (file) => {
+      if (!file.startsWith("http")) {
+        const url = await ctx.storage.getUrl(file as Id<"_storage">);
+        return url;
+      } else return file;
+    }),
+  );
+};
+
+export const likeThread = mutation({
+  args: {
+    threadId: v.id("messages"),
+  },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUserOrThrow(ctx);
+    const message = await ctx.db.get(args.threadId);
+
+    if (!message) throw new Error("Message not found");
+
+    if (message.userLikes?.includes(user._id)) {
+      await ctx.db.patch(args.threadId, {
+        likeCount: message.likeCount - 1,
+        userLikes: message.userLikes.filter((id) => id !== user._id),
+      });
+    }
+    await ctx.db.patch(args.threadId, {
+      likeCount: message.likeCount + 1,
+      userLikes: [...(message.userLikes ?? []), user._id],
+    });
+  },
+});
