@@ -3,7 +3,7 @@ import { type Id } from "@/convex/_generated/dataModel";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useAuth } from "@clerk/clerk-expo";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   FlatList,
   StyleSheet,
@@ -20,10 +20,8 @@ interface ProfileProps {
   userId: Id<"users">;
 }
 
-const Profile: React.FC<ProfileProps> = ({
-  userId,
-  showBackButton = false,
-}) => {
+const Profile: React.FC<ProfileProps> = () => {
+  const { userId, showBackButton } = useLocalSearchParams();
   const { userProfile } = useUserProfile();
   const { top } = useSafeAreaInsets();
   const { signOut } = useAuth();
@@ -83,7 +81,7 @@ const Profile: React.FC<ProfileProps> = ({
             </View>
 
             {userId ? (
-              <UserProfile userId={userId} />
+              <UserProfile userId={userId as Id<"users">} />
             ) : (
               <UserProfile userId={userProfile?._id as Id<"users">} />
             )}

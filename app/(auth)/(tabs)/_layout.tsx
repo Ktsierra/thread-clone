@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Tabs, useRouter } from "expo-router";
 import { TouchableOpacity } from "react-native";
 import * as Haptics from "expo-haptics";
+import { useHeaderHeight } from "@react-navigation/elements";
 
 const Layout = () => {
   const { signOut } = useAuth();

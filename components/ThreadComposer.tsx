@@ -6,7 +6,7 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 import { FontAwesome6, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useMutation } from "convex/react";
-import { Stack, useRouter } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import { useState } from "react";
 import {
   Alert,
@@ -42,6 +42,8 @@ const ThreadComposer: React.FC<ThreadComposerProps> = ({
 
   const addThread = useMutation(api.messages.addThreadMessage);
   const generateUploadUrl = useMutation(api.messages.generateUploadUrl);
+
+  const segments = useSegments();
 
   const handleSubmit = async () => {
     const mediaIds = await Promise.all(mediaFiles.map(uploadMediaFile));
@@ -126,7 +128,7 @@ const ThreadComposer: React.FC<ThreadComposerProps> = ({
   };
 
   return (
-    <View>
+    <View style={isPreview && { pointerEvents: "none" }}>
       <Stack.Screen
         options={{
           headerLeft: () => (
@@ -139,7 +141,6 @@ const ThreadComposer: React.FC<ThreadComposerProps> = ({
           ),
         }}
       />
-
       <View style={styles.topRow}>
         <Image
           source={{ uri: String(userProfile?.imageUrl) }}
@@ -150,6 +151,11 @@ const ThreadComposer: React.FC<ThreadComposerProps> = ({
             {userProfile?.first_name} {userProfile?.last_name}
           </Text>
           <TextInput
+            onPress={
+              segments[2] === "feed"
+                ? () => router.push("/(auth)/(modal)/create")
+                : undefined
+            }
             style={styles.input}
             placeholder={isReply ? "Reply to thread" : "What's new"}
             value={threadContent}
@@ -157,6 +163,7 @@ const ThreadComposer: React.FC<ThreadComposerProps> = ({
             multiline
             autoFocus={!isPreview}
             inputAccessoryViewID={InputAccessoryViewID}
+            editable={!isPreview}
           />
 
           {mediaFiles.length > 0 && (
@@ -220,7 +227,6 @@ const ThreadComposer: React.FC<ThreadComposerProps> = ({
           <Ionicons name={"close"} color={Colors.border} size={24} />
         </TouchableOpacity>
       </View>
-
       <InputAccessoryView nativeID={InputAccessoryViewID}>
         <View style={styles.keyboardAccessoryView}>
           <Text style={styles.keyboardAccessoryText}>
@@ -315,7 +321,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: "row",
     gap: 12,
-    marginBottom: 16,
     padding: 12,
   },
 });

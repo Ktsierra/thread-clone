@@ -1,3 +1,4 @@
+import { useHeaderHeight } from "@react-navigation/elements";
 import { Stack } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 

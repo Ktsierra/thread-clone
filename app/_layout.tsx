@@ -86,7 +86,7 @@ const InitialLayout = () => {
     const inTabsGroup = segments[0] === "(auth)";
 
     if (!isSignedIn && inTabsGroup) router.replace("/(public)");
-    if (isSignedIn && !inTabsGroup) router.replace("/(auth)/(tabs)/profile");
+    if (isSignedIn && !inTabsGroup) router.replace("/(auth)/(tabs)/feed");
   }, [isSignedIn, segments, isLoaded, router]);
 
   useEffect(() => {
