@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import { Colors } from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
@@ -24,7 +25,6 @@ const Layout = () => {
           headerRight: () => (
             <TouchableOpacity>
               <Ionicons
-                // eslint-disable-next-line react-native/no-inline-styles
                 style={{ paddingHorizontal: 12 }}
                 name={"ellipsis-horizontal"}
                 size={24}
@@ -42,6 +42,37 @@ const Layout = () => {
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.dismiss()}>
               <Text>Cancel</Text>
+            </TouchableOpacity>
+          ),
+        }}
+      />
+
+      <Stack.Screen
+        name={"(modal)/image/[url]"}
+        options={{
+          presentation: "fullScreenModal",
+          title: "",
+          headerStyle: {
+            backgroundColor: Colors.black,
+          },
+          headerLeft: () => (
+            <TouchableOpacity
+              onPress={() => router.dismiss()}
+              style={{ marginHorizontal: 6 }}
+            >
+              <Ionicons name={"close"} size={24} color={Colors.white} />
+            </TouchableOpacity>
+          ),
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => router.dismiss()}
+              style={{ marginHorizontal: 6 }}
+            >
+              <Ionicons
+                name={"ellipsis-horizontal"}
+                size={24}
+                color={Colors.white}
+              />
             </TouchableOpacity>
           ),
         }}

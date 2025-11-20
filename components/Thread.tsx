@@ -68,19 +68,26 @@ const Thread = ({ thread }: ThreadProps) => {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.mediaContainer}
           >
-            {mediaFiles.map((imageUrl, index) => {
-              //<Link
-              //href={`/(auth)/(modal)/image/${encodeURIComponent(imageUrl)}?threadId=${thread._id}&likeCount=${likeCount.toString()}&commentCount=${commentCount.toString()}&retweetCount=${retweetCount.toString()}`}
-              //key={index}
-              //asChild
-              //>
-              return (
+            {mediaFiles.map((imageUrl, index) => (
+              <Link
+                href={{
+                  pathname: "/image/[url]",
+                  params: {
+                    url: imageUrl,
+                    threadId: thread._id,
+                    likeCount,
+                    commentCount,
+                    retweetCount,
+                  },
+                }}
+                key={index}
+                asChild
+              >
                 <TouchableOpacity key={index}>
                   <Image source={{ uri: imageUrl }} style={styles.mediaImage} />
                 </TouchableOpacity>
-                //</Link>
-              );
-            })}
+              </Link>
+            ))}
           </ScrollView>
         )}
 
