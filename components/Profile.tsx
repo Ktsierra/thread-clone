@@ -3,7 +3,7 @@ import { type Id } from "@/convex/_generated/dataModel";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useAuth } from "@clerk/clerk-expo";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import {
   FlatList,
   StyleSheet,
@@ -23,8 +23,7 @@ interface ProfileProps {
   userId: Id<"users">;
 }
 
-const Profile: React.FC = () => {
-  const { userId, showBackButton } = useLocalSearchParams();
+const Profile: React.FC<ProfileProps> = ({ userId, showBackButton }) => {
   const { userProfile } = useUserProfile();
   const { top } = useSafeAreaInsets();
   const { signOut } = useAuth();
@@ -32,7 +31,7 @@ const Profile: React.FC = () => {
 
   const { results, status, loadMore } = usePaginatedQuery(
     api.messages.getThreads,
-    { userId: ((userId as Id<"users">) || undefined) ?? userProfile?._id },
+    { userId: (userId || undefined) ?? userProfile?._id },
     {
       initialNumItems: 5,
     },
@@ -41,7 +40,19 @@ const Profile: React.FC = () => {
     <View style={[styles.container, { paddingTop: top }]}>
       <FlatList
         data={results}
-        renderItem={({ item }) => <Thread thread={item} />}
+        renderItem={({ item }) => (
+          <Link
+            href={{
+              pathname: "/feed/[id]",
+              params: { id: item._id },
+            }}
+            asChild
+          >
+            <TouchableOpacity>
+              <Thread thread={item} />
+            </TouchableOpacity>
+          </Link>
+        )}
         ListEmptyComponent={
           <Text style={styles.tabContentText}>
             You haven&apos;t posted anything yet.
@@ -91,7 +102,7 @@ const Profile: React.FC = () => {
             </View>
 
             {userId ? (
-              <UserProfile userId={userId as Id<"users">} />
+              <UserProfile userId={userId} />
             ) : (
               <UserProfile userId={userProfile?._id as Id<"users">} />
             )}

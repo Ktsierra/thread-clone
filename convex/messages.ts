@@ -102,7 +102,7 @@ const getMediaUrls = async (
     mediaFiles.map(async (file) => {
       if (!file.startsWith("http")) {
         const url = await ctx.storage.getUrl(file as Id<"_storage">);
-        return url;
+        return String(url);
       } else return file;
     }),
   );
@@ -128,5 +128,19 @@ export const likeThread = mutation({
       likeCount: message.likeCount + 1,
       userLikes: [...(message.userLikes ?? []), user._id],
     });
+  },
+});
+
+export const getThreadById = query({
+  args: {
+    messageId: v.id("messages"),
+  },
+  handler: async (ctx, args) => {
+    const thread = await ctx.db.get(args.messageId);
+    if (!thread) return null;
+    const creator = await getMessageCreator(ctx, thread.userId);
+    const mediaFiles = await getMediaUrls(ctx, thread.mediaFiles);
+
+    return { ...thread, mediaFiles, creator };
   },
 });

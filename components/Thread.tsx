@@ -9,7 +9,6 @@ import {
   ScrollView,
 } from "react-native";
 import { Feather, Ionicons } from "@expo/vector-icons";
-import { User } from "@/convex/schema";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Colors } from "@/constants/Colors";
@@ -40,8 +39,8 @@ const Thread = ({ thread }: ThreadProps) => {
           <View style={styles.headerText}>
             <Link
               href={{
-                pathname: "/(auth)/(tabs)/profile",
-                params: { userId: creator._id, showBackButton: "true" },
+                pathname: "/feed/profile/[id]",
+                params: { id: creator._id },
               }}
               asChild
             >

@@ -1,9 +1,6 @@
 import {
-  FlatList,
   StyleSheet,
   View,
-  Text,
-  RefreshControl,
   TouchableOpacity,
   Image,
   type ImageSourcePropType,
@@ -12,12 +9,8 @@ import { usePaginatedQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useState } from "react";
 import ThreadComposer from "@/components/ThreadComposer";
-import { router, Stack, useNavigation, useRouter } from "expo-router";
-import { useHeaderHeight } from "@react-navigation/elements";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { Link, router, useNavigation } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors } from "@/constants/Colors";
 import Thread from "@/components/Thread";
 import Animated, {
@@ -26,7 +19,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useIsFocused } from "@react-navigation/native";
-import { runOnJS, scheduleOnRN } from "react-native-worklets";
+import { scheduleOnRN } from "react-native-worklets";
 
 const Feed = () => {
   // Sentry test Errors
@@ -71,17 +64,29 @@ const Feed = () => {
   //Animation
   const navigation = useNavigation();
   const scrollOffset = useSharedValue(0);
+  const lastScrollOffset = useSharedValue(0);
+  const hiddenOffset = useSharedValue(0);
   const tabBarHeight = useBottomTabBarHeight();
   const isFocus = useIsFocused();
 
   const updateTabBar = () => {
-    let newMarginBottom = 0;
-    if (scrollOffset.value >= 0 && scrollOffset.value <= tabBarHeight) {
-      newMarginBottom = -scrollOffset.value;
-    } else if (scrollOffset.value >= tabBarHeight) {
-      newMarginBottom = -tabBarHeight;
+    // compute delta since last scroll and accumulate hidden offset
+    const current = scrollOffset.value;
+    const delta = current - lastScrollOffset.value;
+    lastScrollOffset.value = current;
+
+    if (current <= 0) {
+      // At top: fully show tab bar
+      hiddenOffset.value = 0;
+    } else {
+      // scroll down (delta > 0) increases hidden; scroll up (delta < 0) decreases hidden
+      hiddenOffset.value = Math.min(
+        Math.max(hiddenOffset.value + delta, 0),
+        tabBarHeight,
+      );
     }
 
+    const newMarginBottom = -hiddenOffset.value;
     navigation.getParent()?.setOptions({
       tabBarStyle: {
         marginBottom: newMarginBottom,
@@ -104,7 +109,19 @@ const Feed = () => {
       scrollEventThrottle={16}
       data={results}
       showsVerticalScrollIndicator={false}
-      renderItem={({ item }) => <Thread thread={item} />}
+      renderItem={({ item }) => (
+        <Link
+          href={{
+            pathname: "/feed/[id]",
+            params: { id: item._id },
+          }}
+          asChild
+        >
+          <TouchableOpacity>
+            <Thread thread={item} />
+          </TouchableOpacity>
+        </Link>
+      )}
       keyExtractor={(item) => item._id}
       onEndReached={onLoadMore}
       onEndReachedThreshold={0.5}
