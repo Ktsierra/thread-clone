@@ -15,7 +15,11 @@ export const addThreadMessage = mutation({
     const user = await getCurrentUserOrThrow(ctx);
 
     if (args.threadId) {
-      // TODO
+      const originalThread = await ctx.db.get(args.threadId);
+
+      await ctx.db.patch(args.threadId, {
+        commentCount: (originalThread?.commentCount ?? 0) + 1,
+      });
     }
 
     return await ctx.db.insert("messages", {
@@ -142,5 +146,33 @@ export const getThreadById = query({
     const mediaFiles = await getMediaUrls(ctx, thread.mediaFiles);
 
     return { ...thread, mediaFiles, creator };
+  },
+});
+
+export const getComments = query({
+  args: {
+    messageId: v.id("messages"),
+  },
+  handler: async (ctx, args) => {
+    const comments = await ctx.db
+      .query("messages")
+      .filter((q) => q.eq(q.field("threadId"), args.messageId))
+      .order("desc")
+      .collect();
+
+    const messagesWithCreator = await Promise.all(
+      comments.map(async (comment) => {
+        const creator = await getMessageCreator(ctx, comment.userId);
+        const mediaUrls = await getMediaUrls(ctx, comment.mediaFiles);
+
+        return {
+          ...comment,
+          creator,
+          mediaFiles: mediaUrls,
+        };
+      }),
+    );
+
+    return messagesWithCreator;
   },
 });
