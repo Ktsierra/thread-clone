@@ -1,11 +1,13 @@
 /* eslint-disable react-native/no-inline-styles */
 import { Colors } from "@/constants/Colors";
+import { usePush } from "@/hooks/usePush";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
 import { TouchableOpacity, Text } from "react-native";
 
 const Layout = () => {
   const router = useRouter();
+  usePush();
   return (
     <Stack
       screenOptions={{
