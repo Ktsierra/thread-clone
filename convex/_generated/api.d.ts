@@ -10,6 +10,7 @@
 
 import type * as http from "../http.js";
 import type * as messages from "../messages.js";
+import type * as push from "../push.js";
 import type * as user from "../user.js";
 
 import type {
@@ -21,6 +22,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   http: typeof http;
   messages: typeof messages;
+  push: typeof push;
   user: typeof user;
 }>;
 

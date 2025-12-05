@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { getCurrentUserOrThrow } from "./user";
 import { paginationOptsValidator, type PaginationResult } from "convex/server";
 import { type Id, type Doc } from "./_generated/dataModel";
+import { internal } from "./_generated/api";
 
 export const addThreadMessage = mutation({
   args: {
@@ -20,6 +21,36 @@ export const addThreadMessage = mutation({
       await ctx.db.patch(args.threadId, {
         commentCount: (originalThread?.commentCount ?? 0) + 1,
       });
+
+      // TODO: Send push notifications
+      if (originalThread?.userId !== user._id) {
+        try {
+          const originalUser = await ctx.db.get(
+            originalThread?.userId as Id<"users">,
+          );
+          const pushToken = originalUser?.pushToken;
+
+          if (!pushToken) {
+            throw new Error("User does not have a push token");
+          }
+
+          await ctx.scheduler.runAfter(
+            2000,
+            internal.push.sendPushNotification,
+            {
+              pushToken,
+              threadId: args.threadId,
+              messageTitle: `${user.first_name ?? "Someone"} commented on your thread`,
+              messageBody: args.content,
+            },
+          );
+        } catch (error: unknown) {
+          //type of error is Error check
+          if (error instanceof Error)
+            console.log("error.message:", error.message);
+          else console.log("error:", error);
+        }
+      }
     }
 
     return await ctx.db.insert("messages", {

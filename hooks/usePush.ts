@@ -109,7 +109,7 @@ export const usePush = () => {
             projectId,
           })
         ).data;
-        console.log(pushTokenString);
+        console.log("pushtoken", pushTokenString);
         return pushTokenString;
       } catch (e: unknown) {
         const message = e instanceof Error ? e.message : String(e);
