@@ -54,7 +54,8 @@
           "project": "threads-clone",
           "organization": "personal-1k4"
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,

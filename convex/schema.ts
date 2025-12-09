@@ -28,6 +28,10 @@ export const Message = {
 };
 
 export default defineSchema({
-  users: defineTable(User).index("byClerkId", ["clerkId"]),
+  users: defineTable(User)
+    .index("byClerkId", ["clerkId"])
+    .searchIndex("searchUsers", {
+      searchField: "username",
+    }),
   messages: defineTable(Message),
 });

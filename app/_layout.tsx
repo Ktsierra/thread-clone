@@ -113,7 +113,7 @@ const RootLayoutNav = () => {
     <ClerkProvider tokenCache={tokenCache}>
       <ClerkLoaded>
         <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
-          <StatusBar animated={true} style="auto" />
+          <StatusBar animated={true} />
           <InitialLayout />
         </ConvexProviderWithClerk>
       </ClerkLoaded>

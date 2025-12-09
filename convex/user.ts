@@ -84,6 +84,26 @@ export const generateUploadUrl = mutation({
   },
 });
 
+export const searchUsers = query({
+  args: {
+    search: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const users = await ctx.db
+      .query("users")
+      .withSearchIndex("searchUsers", (q) => q.search("username", args.search))
+      .collect();
+
+    const usersWithImageUrls = await Promise.all(
+      users.map(async (user) => {
+        return getUserWithImageUrl(ctx, user);
+      }),
+    );
+
+    return usersWithImageUrls;
+  },
+});
+
 // REUSABLES
 const getUserWithImageUrl = async (ctx: QueryCtx, user: Doc<"users">) => {
   if (!user.imageUrl || user.imageUrl.startsWith("http")) {

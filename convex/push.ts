@@ -22,8 +22,8 @@ interface ExpoPushResponse {
   [key: string]: unknown;
 }
 
+//NOTE: This must be specified using 'pnpx convex env' to be available for convex
 const EXPO_ACCESS_TOKEN = process.env.EXPO_ACCESS_TOKEN;
-console.log(EXPO_ACCESS_TOKEN);
 
 export const sendPushNotification = internalAction({
   args: {
@@ -32,9 +32,7 @@ export const sendPushNotification = internalAction({
     messageBody: v.string(),
     threadId: v.id("messages"),
   },
-  handler: async (ctx, args) => {
-    console.log("args:", args);
-
+  handler: async (_ctx, args) => {
     const res = await fetch("https://exp.host/--/api/v2/push/send", {
       method: "POST",
       headers: {
@@ -54,7 +52,6 @@ export const sendPushNotification = internalAction({
 
     // cast the parsed JSON into ExplorerPushResponse to avoid `any`
     const notif = (await res.json()) as ExpoPushResponse;
-    console.log(":", notif);
     return notif;
   },
 });
